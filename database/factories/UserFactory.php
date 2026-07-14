@@ -30,7 +30,44 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => 'user',
+            'is_subscribed' => false,
+            'subscription_ends_at' => null,
         ];
+    }
+
+    public function subscribed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_subscribed' => true,
+            'subscription_ends_at' => fake()->dateTimeBetween('+1 month', '+12 months'),
+        ]);
+    }
+
+    public function expiredSubscription(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_subscribed' => false,
+            'subscription_ends_at' => fake()->dateTimeBetween('-6 months', '-1 day'),
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+        ]);
+    }
+
+    public function manager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'manager',
+            'name' => 'Manager Assistant',
+            'email' => 'manager@example.com',
+        ]);
     }
 
     /**
