@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use \Illuminate\Database\Eloquent\Relations\hasMany;
+use \Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -18,20 +18,22 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    public function boards(): hasMany
+    public function boards(): HasMany
     {
         return $this->hasMany(Board::class);
     }
 
+    /**
+     * Check if the user is allowed to create a new board based on SaaS limits and RBAC.
+     */
     public function canCreateBoard(): bool
     {
-        // 1. Проверяем, активна ли подписка прямо сейчас.
-        // Метод isFuture() проверяет, находится ли дата окончания в будущем.
-        if ($this->is_subscribed && $this->subscription_ends_at && $this->subscription_ends_at->isFuture()) {
+        // 1. Admins and Managers have bypassed limits. Premium subscribers can create boards if subscription is active.
+        if (in_array($this->role, array('admin', 'manager')) || ($this->is_subscribed && $this->subscription_ends_at && $this->subscription_ends_at->isFuture())) {
             return true;
         }
 
-        // 2. Если подписки нет или она истекла, проверяем лимит бесплатных досок
+        // 2. Free tier users are limited to a maximum of 3 boards.
         return $this->boards()->count() < 3;
     }
 
