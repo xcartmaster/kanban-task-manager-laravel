@@ -17,25 +17,23 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create 1 Super Admin for testing login
+        // 1. Create 1 Super Admin for testing login (with immediate structure)
         DB::transaction(function () {
             User::factory()->admin()
                 ->has(Board::factory()->count(5)
                     ->has(Column::factory()->count(4)->sequenceWithNameAndPosition()
-                        ->has(Task::factory()->count(5))
+                        ->has(Task::factory()->count(rand(2, 6)))->sequence(fn ($sequence) => ['position' => $sequence->index])
                     )
                 )
                 ->create();
         });
 
         // 2. Create 1 Manager Assistant
-        DB::transaction(function () {
-            User::factory()->manager()->create();
-        });
+        User::factory()->manager()->create();
 
         // 3. Create 50 regular users without any subscription
-        DB::transaction(function () {
-            User::factory()->count(50)->create()->each(function (User $user) {
+        User::factory()->count(50)->create()->each(function (User $user) {
+            DB::transaction(function () use ($user) {
                 Board::factory()->count(rand(1, 3))->create(['user_id' => $user->id])->each(function (Board $board){
                     Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column){
                         Task::factory()->count(rand(0, 5))
@@ -49,8 +47,8 @@ class UserSeeder extends Seeder
         });
 
         // 4. Create 30 users with an active premium subscription
-        DB::transaction(function () {
-            User::factory()->count(30)->subscribed()->create()->each(function (User $user) {
+        User::factory()->count(30)->subscribed()->create()->each(function (User $user) {
+            DB::transaction(function () use ($user) {
                 Board::factory()->count(rand(4, 7))->create(['user_id' => $user->id])->each(function (Board $board){
                    Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column){
                       Task::factory()->count(rand(0, 5))->sequence(fn ($sequence) => [
@@ -63,8 +61,8 @@ class UserSeeder extends Seeder
         });
 
         // 5. Create 20 users with an expired subscription (to test limits)
-        DB::transaction(function () {
-            User::factory()->count(20)->expiredSubscription()->create()->each(function (User $user) {
+        User::factory()->count(20)->expiredSubscription()->create()->each(function (User $user) {
+            DB::transaction(function () use ($user) {
                 Board::factory()->count(rand(5, 6))->create(['user_id' => $user->id])->each(function (Board $board) {
                     Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column) {
                         Task::factory()->count(rand(2, 7))
@@ -78,16 +76,20 @@ class UserSeeder extends Seeder
         });
 
         /*
-        // If you need to seed a large amount of data (e.g., 20,000+ users),
-        // processing it in small chunks prevents PHP from running out of memory.
+        // 1. Disable query logging to prevent memory leaks from millions of INSERT statements
+        DB::connection()->disableQueryLog();
+
+        // 2. Prevent PHP execution timeout
         set_time_limit(0);
 
-        $totalUsers = 20000;
+        $totalUsers = 1000;
         $chunkSize = 100;
 
         for ($i = 0; $i < $totalUsers; $i += $chunkSize) {
-            DB::transaction(function () use ($chunkSize) {
-                User::factory()->count($chunkSize)->expiredSubscription()->create()->each(function (User $user) {
+            // Generate chunk entries
+            User::factory()->count($chunkSize)->expiredSubscription()->create()->each(function (User $user) {
+                // Wrap each user infrastructure creation in a standalone atomic transaction
+                DB::transaction(function () use ($user) {
                     Board::factory()->count(rand(5, 6))->create(['user_id' => $user->id])->each(function (Board $board) {
                         Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column) {
                             Task::factory()->count(rand(2, 7))
@@ -100,10 +102,10 @@ class UserSeeder extends Seeder
                 });
             });
 
-            // Force PHP's garbage collector to free up memory used by Eloquent models
-            // generated in the current chunk iteration.
+            // 3. Force PHP's garbage collector to free up memory used by Eloquent models in current chunk
             gc_collect_cycles();
         }
         */
+
     }
 }
