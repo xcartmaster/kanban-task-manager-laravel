@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -15,6 +16,12 @@ class Task extends Model
     public function column(): BelongsTo
     {
         return $this->belongsTo(Column::class);
+    }
+
+    public function comments(): HasMany
+    {
+        // Sort comments from oldest to newest to build a proper timeline chat
+        return $this->hasMany(Comment::class)->orderBy('created_at', 'asc');
     }
 
     protected function casts(): array
