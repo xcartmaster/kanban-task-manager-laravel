@@ -7,12 +7,14 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use \Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
+// class User extends Authenticatable implements MustVerifyEmail
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -35,6 +37,14 @@ class User extends Authenticatable
 
         // 2. Free tier users are limited to a maximum of 3 boards.
         return $this->boards()->count() < 3;
+    }
+
+    /**
+     * The boards that the user belongs to.
+     */
+    public function sharedBoards(): BelongsToMany
+    {
+        return $this->belongsToMany(Board::class, 'board_user')->withPivot('role')->withTimestamps();
     }
 
     /**
