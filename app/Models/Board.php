@@ -11,7 +11,7 @@ class Board extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'name'];
+    protected $fillable = ['user_id', 'name', 'position'];
 
     public function user(): BelongsTo
     {
