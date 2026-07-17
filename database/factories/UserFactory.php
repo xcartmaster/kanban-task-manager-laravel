@@ -61,6 +61,24 @@ class UserFactory extends Factory
         ]);
     }
 
+    /**
+     * Indicate that the user is an admin and should be linked to their boards via pivot.
+     */
+    public function adminAsBoardOwner(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+        ])->afterCreating(function (User $user) {
+            // Retrieve all boards that were just created for this user
+            $boards = $user->boards;
+
+            // Securely attach the user to each board with pivot data without breaking factory chains
+            $user->sharedBoards()->attach($boards, ['role' => 'owner']);
+        });
+    }
+
     public function manager(): static
     {
         return $this->state(fn (array $attributes) => [

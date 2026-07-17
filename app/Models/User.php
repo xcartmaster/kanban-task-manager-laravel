@@ -44,7 +44,7 @@ class User extends Authenticatable
      */
     public function sharedBoards(): BelongsToMany
     {
-        return $this->belongsToMany(Board::class, 'board_user')->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(Board::class, 'board_user')->withPivot('role')->withTimestamps()->orderBy('position', 'asc');
     }
 
     /**
