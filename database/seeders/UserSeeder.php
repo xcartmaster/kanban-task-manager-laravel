@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
         // 1. Create 1 Super Admin for testing login (with immediate structure)
         DB::transaction(function () {
             User::factory()->admin()
-                ->has(Board::factory()->count(5)
+                ->has(Board::factory()->count(5)->sequence(fn ($sequence) => ['position' => $sequence->index])
                     ->has(Column::factory()->count(4)->sequenceWithNameAndPosition()
                         ->has(Task::factory()->count(rand(2, 6)))->sequence(fn ($sequence) => ['position' => $sequence->index])
                     )
@@ -34,7 +34,7 @@ class UserSeeder extends Seeder
         // 3. Create 50 regular users without any subscription
         User::factory()->count(50)->create()->each(function (User $user) {
             DB::transaction(function () use ($user) {
-                Board::factory()->count(rand(1, 3))->create(['user_id' => $user->id])->each(function (Board $board){
+                Board::factory()->count(rand(1, 3))->sequence(fn ($sequence) => ['position' => $sequence->index])->create(['user_id' => $user->id])->each(function (Board $board){
                     Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column){
                         Task::factory()->count(rand(0, 5))
                             ->sequence(fn ($sequence) => [
@@ -49,7 +49,7 @@ class UserSeeder extends Seeder
         // 4. Create 30 users with an active premium subscription
         User::factory()->count(30)->subscribed()->create()->each(function (User $user) {
             DB::transaction(function () use ($user) {
-                Board::factory()->count(rand(4, 7))->create(['user_id' => $user->id])->each(function (Board $board){
+                Board::factory()->count(rand(4, 7))->sequence(fn ($sequence) => ['position' => $sequence->index])->create(['user_id' => $user->id])->each(function (Board $board){
                    Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column){
                       Task::factory()->count(rand(0, 5))->sequence(fn ($sequence) => [
                           'position' => $sequence->index
@@ -63,7 +63,7 @@ class UserSeeder extends Seeder
         // 5. Create 20 users with an expired subscription (to test limits)
         User::factory()->count(20)->expiredSubscription()->create()->each(function (User $user) {
             DB::transaction(function () use ($user) {
-                Board::factory()->count(rand(5, 6))->create(['user_id' => $user->id])->each(function (Board $board) {
+                Board::factory()->count(rand(5, 6))->sequence(fn ($sequence) => ['position' => $sequence->index])->create(['user_id' => $user->id])->each(function (Board $board) {
                     Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column) {
                         Task::factory()->count(rand(2, 7))
                             ->sequence(fn ($sequence) => [
@@ -90,7 +90,7 @@ class UserSeeder extends Seeder
             User::factory()->count($chunkSize)->expiredSubscription()->create()->each(function (User $user) {
                 // Wrap each user infrastructure creation in a standalone atomic transaction
                 DB::transaction(function () use ($user) {
-                    Board::factory()->count(rand(5, 6))->create(['user_id' => $user->id])->each(function (Board $board) {
+                    Board::factory()->count(rand(5, 6))->sequence(fn ($sequence) => ['position' => $sequence->index])->create(['user_id' => $user->id])->each(function (Board $board) {
                         Column::factory()->count(4)->sequenceWithNameAndPosition()->create(['board_id' => $board->id])->each(function (Column $column) {
                             Task::factory()->count(rand(2, 7))
                                 ->sequence(fn ($sequence) => [

@@ -18,9 +18,18 @@ class BoardFactory extends Factory
      */
     public function definition(): array
     {
+        $name = ucfirst(fake()->sentence(rand(2, 3), false) . ' ' . fake()->randomElement(['project', 'board']));
+
+        // Generate the base slug from the generated board name
+        $baseSlug = str($name)->slug();
+
+        // Create a unique 4-character random hash to append to the slug
+        $hash = substr(md5(uniqid()), 0, 4);
+
         return [
             'user_id' => User::factory(),
-            'name' => ucfirst(fake()->sentence(rand(2, 3), false) . ' ' . fake()->randomElement(['project', 'board'])),
+            'name' => $name,
+            'slug' => $baseSlug . '-' . $hash
         ];
     }
 }
