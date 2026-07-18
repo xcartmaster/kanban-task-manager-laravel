@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 
 /**
  * @extends Factory<User>
@@ -85,7 +86,24 @@ class UserFactory extends Factory
             'role' => 'manager',
             'name' => 'Manager Assistant',
             'email' => 'manager@example.com',
-        ]);
+        ])->afterCreating(function (User $user) {
+            // Retrieve all boards that were just created for this user
+            $boards = $user->boards;
+
+            // Securely attach the user to each board with pivot data without breaking factory chains
+            $user->sharedBoards()->attach($boards, ['role' => 'owner']);
+
+            // Define possible shared roles for the admin user
+            $sharedRoles = ['member', 'viewer'];
+
+            // Loop through each board to assign a unique random role specifically for the Admin (ID: 1)
+            foreach ($boards as $board) {
+                $user->sharedBoards()->attach($board->id, [
+                    'user_id' => 1,
+                    'role'    => Arr::random($sharedRoles),
+                ]);
+            }
+        });
     }
 
     /**

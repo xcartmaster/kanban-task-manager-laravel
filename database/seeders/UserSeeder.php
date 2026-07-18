@@ -41,7 +41,27 @@ class UserSeeder extends Seeder
         });
 
         // 2. Create 1 Manager Assistant
-        User::factory()->manager()->create();
+        // User::factory()->manager()->create();
+        DB::transaction(function () {
+            User::factory()
+                ->manager() // Calls our custom state with the afterCreating hook
+                ->has(
+                    Board::factory()
+                        ->count(5)
+                        ->sequence(fn ($sequence) => ['position' => $sequence->index])
+                        ->has(
+                            Column::factory()
+                                ->count(4)
+                                ->sequenceWithNameAndPosition()
+                                ->has(
+                                    Task::factory()
+                                        ->count(rand(2, 6))
+                                        ->sequence(fn ($sequence) => ['position' => $sequence->index])
+                                )
+                        )
+                )
+                ->create();
+        });
 
         // 3. Create 50 regular users without any subscription
         User::factory()->count(50)->create()->each(function (User $user) {
