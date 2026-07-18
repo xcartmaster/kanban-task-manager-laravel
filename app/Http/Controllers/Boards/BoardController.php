@@ -11,10 +11,10 @@ class BoardController extends Controller
 {
     public function index(Request $request): Response
     {
-        $boards = $request->user()->sharedBoards()->with('columns.tasks')->get();
+        $shared_boards = $request->user()->sharedBoards()->with('columns.tasks')->get();
 
         return Inertia::render('Dashboard/Boards/Index', [
-            'boards' => $boards
+            'shared_boards' => $shared_boards
         ]);
     }
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue'
 
 defineProps({
     canLogin: {
@@ -17,6 +18,20 @@ defineProps({
         required: true,
     },
 });
+
+// Reactive state for the theme mode
+const isDark = ref(false)
+
+function toggleTheme() {
+    isDark.value = !isDark.value
+
+    // Toggle the .dark class on the root HTML element
+    if (isDark.value) {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+}
 
 function handleImageError() {
     document.getElementById('screenshot-container')?.classList.add('!hidden');
@@ -79,6 +94,16 @@ function handleImageError() {
                                 Register
                             </Link>
                         </template>
+
+                        <!-- Theme switch element placed right after the nav element -->
+                        <button
+                            @click="toggleTheme"
+                            class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors duration-200 cursor-pointer flex items-center justify-center"
+                            :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                        >
+                            <!-- Inline emoji icon representing current theme status -->
+                            <span class="text-base">{{ isDark ? '🌙' : '☀️' }}</span>
+                        </button>
                     </nav>
                 </header>
 
