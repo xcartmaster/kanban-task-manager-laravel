@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import CreateBoardCard from '@/Components/Boards/CreateBoardCard.vue';
 import BoardCard from '@/Components/Boards/BoardCard.vue';
 
@@ -28,9 +28,32 @@ const myBoardsCount = computed(() => myBoards.value.length);
 const sharedBoardsCount = computed(() => sharedBoards.value.length);
 const totalBoardsCount = computed(() => (props.shared_boards || []).length);
 
-// 2. Placeholder function for the next lesson
+// --- MODAL & FORM LOGIC ---
+const isCreateModalOpen = ref(false);
+
+// Explicitly named form helper for clearer domain understanding
+const boardForm = useForm({
+    name: '',
+});
+
 function openCreateModal() {
-    console.log('Open modal logic will be implemented here');
+    boardForm.clearErrors();
+    boardForm.reset();
+    isCreateModalOpen.value = true;
+}
+
+function closeCreateModal() {
+    isCreateModalOpen.value = false;
+}
+
+function submitCreateBoardForm() {
+    // Send POST request via Inertia to our Laravel backend endpoint
+    boardForm.post(route('boards.store'), {
+        onSuccess: () => {
+            boardForm.reset();
+            closeCreateModal();
+        }
+    });
 }
 </script>
 
@@ -88,6 +111,53 @@ function openCreateModal() {
                         </div>
                     </section>
                 </template>
+            </div>
+        </div>
+
+        <!-- SIMPLE MODAL OVERLAY (Tailwind v4 compatible, fully supporting Dark Mode) -->
+        <div v-if="isCreateModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
+            <div class="w-full max-w-md p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 transform transition-all">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Create New Project Board</h3>
+                    <button @click="closeCreateModal" type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer text-xl">✕</button>
+                </div>
+
+                <form @submit.prevent="submitCreateBoardForm" class="space-y-4">
+                    <div>
+                        <label for="board-name" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-zinc-500 mb-1">Board Title</label>
+                        <input
+                            v-model="boardForm.name"
+                            type="text"
+                            id="board-name"
+                            placeholder="e.g., Mobile App Development"
+                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            required
+                            :disabled="boardForm.processing"
+                        />
+                        <!-- Dynamic Validation/SaaS Limit Error Rendering -->
+                        <p v-if="boardForm.errors.name" class="mt-1.5 text-xs font-medium text-red-500 flex items-center space-x-1">
+                            <span>⚠️</span> <span>{{ boardForm.errors.name }}</span>
+                        </p>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-3 pt-2">
+                        <button
+                            @click="closeCreateModal"
+                            type="button"
+                            class="px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                            :disabled="boardForm.processing"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors cursor-pointer"
+                            :disabled="boardForm.processing"
+                        >
+                            {{ boardForm.processing ? 'Creating...' : 'Create Board' }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </AuthenticatedLayout>

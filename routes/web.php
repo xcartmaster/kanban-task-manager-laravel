@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'/*, 'verified'*/])->group(function () {
     Route::get('/dashboard/boards', [BoardController::class, 'index'])->name('boards.index');
+    Route::post('/dashboard/boards', [BoardController::class, 'store'])->name('boards.store');
 });
 
 require __DIR__.'/auth.php';
