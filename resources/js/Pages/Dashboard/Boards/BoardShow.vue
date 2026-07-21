@@ -21,7 +21,7 @@ const scrollLeftStart = ref(0);
 
 // Reactive state parameters for structural viewport dynamic calculations
 const showScrollbar = ref(false);
-const thumbWidthPercent = ref(20); // Fallback default slider thumb size percentage
+const thumbWidthPercent = ref(20);
 
 // Calculate dynamic element bounds to resize and show/hide the scrollbar proportionally
 function checkOverflow() {
@@ -32,10 +32,7 @@ function checkOverflow() {
     showScrollbar.value = hasOverflow;
 
     if (hasOverflow) {
-        // Calculate the exact proportion of visible content compared to total content width
         const visibleRatio = viewport.clientWidth / viewport.scrollWidth;
-
-        // Convert to percentage and bound between 10% (min size) and 90% (max size) to preserve UX feel
         thumbWidthPercent.value = Math.max(10, Math.min(visibleRatio * 100, 90));
 
         nextTick(() => {
@@ -58,20 +55,25 @@ function handleViewportScroll() {
 // Initialize custom drag-and-drop mechanics for our handmade scrollbar thumb
 function startThumbDrag(event) {
     isDragging.value = true;
-    startX.value = (event.pageX || event.touches.pageX) - customScrollbarThumb.value.offsetLeft;
+
+    // Correctly target the touch point coordinate on mobile or fallback to mouse cursor X position
+    const clientX = event.touches ? event.touches[0].pageX : event.pageX;
+    startX.value = clientX - customScrollbarThumb.value.offsetLeft;
     scrollLeftStart.value = kanbanViewport.value.scrollLeft;
 
     document.addEventListener('mousemove', handleThumbMove);
     document.addEventListener('mouseup', stopThumbDrag);
-    document.addEventListener('touchmove', handleThumbMove);
-    document.addEventListener('touchend', stopThumbDrag);
+    document.addEventListener('touchmove', handleThumbMove, { passive: false });
+    document.addEventListener('touchend', stopThumbDrag, { passive: false });
 }
 
 function handleThumbMove(event) {
     if (!isDragging.value || !kanbanViewport.value || !customScrollbarThumb.value || !customScrollbarTrack.value) return;
 
-    event.preventDefault();
-    const pageX = event.pageX || event.touches.pageX;
+    event.preventDefault(); // Prevents standard mobile page bouncing during drag execution
+
+    // FIXED: Correctly extracts pageX from the first active touch array item for mobile support
+    const pageX = event.touches ? event.touches[0].pageX : event.pageX;
     const currentThumbLeft = pageX - startX.value;
 
     const maxThumbLeft = customScrollbarTrack.value.clientWidth - customScrollbarThumb.value.clientWidth;
@@ -88,11 +90,10 @@ function stopThumbDrag() {
     isDragging.value = false;
     document.removeEventListener('mousemove', handleThumbMove);
     document.removeEventListener('mouseup', stopThumbDrag);
-    document.removeEventListener('touchmove', handleThumbMove);
-    document.removeEventListener('touchend', stopThumbDrag);
+    document.removeEventListener('touchmove', handleThumbMove, { passive: false });
+    document.removeEventListener('touchend', stopThumbDrag, { passive: false });
 }
 
-// Set up listeners to check overflow status dynamically on load and resize events
 onMounted(() => {
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
@@ -104,7 +105,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <!-- Dynamic browser tab title with explicit board name -->
     <Head :title="`Boards :: ${board.name}`" />
 
     <AuthenticatedLayout>
@@ -114,32 +114,30 @@ onUnmounted(() => {
             </h2>
         </template>
 
-        <!-- 1. Changed root background to bg-gray-50 for high contrast with white columns -->
-        <div class="py-12 w-full bg-gray-50 dark:bg-zinc-950/40 min-h-[calc(100vh-65px)]">
-            <div class="w-full px-4 sm:px-6 lg:px-8 space-y-4">
+        <!-- Main container locked to full screen viewport height bounds -->
+        <div class="h-[calc(100vh-66px)] w-full bg-gray-50 dark:bg-zinc-950/40 overflow-hidden p-6">
 
-                <!-- Main Kanban Viewport -->
+            <!--
+              We removed 'justify-between' and used a clean max-w container.
+              The content will now naturally sit at the top of the page.
+            -->
+            <div class="w-full mx-auto space-y-4">
+
+                <!-- Main Kanban Viewport containing responsive lanes -->
                 <div
                     ref="kanbanViewport"
                     @scroll="handleViewportScroll"
-                    class="flex pb-2 items-start select-none overflow-x-auto scrollbar-none"
+                    class="flex pb-2 items-start select-none overflow-x-hidden scrollbar-none touch-none w-full"
                     :class="showScrollbar ? 'justify-start space-x-6' : 'justify-center space-x-6'"
                     style="scrollbar-width: none; -ms-overflow-style: none;"
                 >
-                    <!-- 2. Changed column background to solid white (bg-white) and added clear borders -->
-                    <div
-                        v-for="column in board.columns"
-                        :key="column.id"
-                        class="w-72 shrink-0 bg-white dark:bg-zinc-900 border border-gray-200/60 dark:border-zinc-800/80 p-4 rounded-2xl shadow-sm"
-                    >
+                    <!-- Columns Loop -->
+                    <div v-for="column in board.columns" :key="column.id" class="w-72 shrink-0 bg-white dark:bg-zinc-900 border border-gray-200/60 dark:border-zinc-800/80 p-4 rounded-2xl shadow-sm pointer-events-auto">
                         <!-- Column Header Title -->
-                        <h4 class="font-bold text-gray-800 dark:text-zinc-200 mb-3">
-                            {{ column.name }}
-                        </h4>
+                        <h4 class="font-bold text-gray-800 dark:text-zinc-200 mb-3">{{ column.name }}</h4>
 
-                        <!-- Vertical tasks container -->
                         <div class="space-y-3">
-                            <!-- 3. Tasks styles updated with dynamic hover shadow and scale effects -->
+                            <!-- Tasks Loop -->
                             <div
                                 v-for="task in column.tasks"
                                 :key="task.id"
@@ -152,11 +150,13 @@ onUnmounted(() => {
                 </div>
 
                 <!-- --- FIXED HANDMADE KANBAN SCROLLBAR TRACK --- -->
+                <!-- Removed 'mt-auto' and wrapped in a max-w layout to match the columns perfectly -->
                 <div
                     v-if="showScrollbar"
                     ref="customScrollbarTrack"
-                    class="relative w-full h-3 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden select-none"
+                    class="relative w-full h-3.5 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden select-none"
                 >
+                    <!-- Draggable track slider thumb with dynamic width assignment -->
                     <div
                         ref="customScrollbarThumb"
                         @mousedown="startThumbDrag"
