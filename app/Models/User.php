@@ -30,12 +30,19 @@ class User extends Authenticatable
      */
     public function canCreateBoard(): bool
     {
-        // 1. Admins and Managers have bypassed limits. Premium subscribers can create boards if subscription is active.
-        if (in_array($this->role, array('admin', 'manager')) || ($this->is_subscribed && $this->subscription_ends_at && $this->subscription_ends_at->isFuture())) {
+        if (
+            /*
+            // Admins and Managers have bypassed limits.
+            // in_array($this->role, array('admin', 'manager')) ||
+            // Moved to BoardPolicy.php -> before()
+            */
+            // Premium subscribers can create boards if subscription is active.
+            $this->is_subscribed && $this->subscription_ends_at && $this->subscription_ends_at->isFuture()
+        ) {
             return true;
         }
 
-        // 2. Free tier users are limited to a maximum of 3 boards.
+        // Free tier users are limited to a maximum of 3 boards.
         return $this->boards()->count() < 3;
     }
 

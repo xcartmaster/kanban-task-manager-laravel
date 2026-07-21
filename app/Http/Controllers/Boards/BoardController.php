@@ -35,7 +35,7 @@ class BoardController extends Controller
      */
     public function store(StoreBoardRequest $request): RedirectResponse
     {
-        // $this->authorize('create', Board::class); // 403 Forbidden
+        // Gate::authorize('create', Board::class); // 403 Forbidden
         if (!Gate::allows('create', Board::class)) {
             return back()->withErrors([
                 'name' => 'You have reached the limit of 3 free boards. Please upgrade to a Premium subscription!'
@@ -46,5 +46,23 @@ class BoardController extends Controller
         $this->boardService->createBoardForUser($request->user(), $request->validated());
 
         return redirect()->route('boards.index');
+    }
+
+    /**
+     * Display the specified board with its columns and tasks if authorized.
+     */
+    public function show(Board $board): Response
+    {
+        // 1. Strictly authorize access (BoardPolicy@before will auto-pass admins/managers,
+        // and BoardPolicy@view will check regular members via pivot table)
+        Gate::authorize('view', $board);
+
+        // 2. Eager load nested columns and tasks to prevent N+1 database queries
+        $board->load('columns.tasks');
+
+        // 3. Render the dedicated Kanban screen view
+        return Inertia::render('Dashboard/Boards/Show', [
+            'board' => $board
+        ]);
     }
 }
