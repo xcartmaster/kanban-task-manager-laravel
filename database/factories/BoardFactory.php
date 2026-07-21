@@ -18,7 +18,7 @@ class BoardFactory extends Factory
      */
     public function definition(): array
     {
-        $name = ucfirst(fake()->sentence(rand(2, 3), false) . ' ' . fake()->randomElement(['project', 'board']));
+        $name = ucfirst(rtrim(fake()->sentence(rand(2, 3), false), '.') . ' ' . fake()->randomElement(['project', 'board']));
 
         // Generate the base slug from the generated board name
         $baseSlug = str($name)->slug();

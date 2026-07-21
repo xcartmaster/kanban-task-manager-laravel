@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 // Define the incoming props for the board object
 const props = defineProps({
@@ -30,7 +31,7 @@ const columnsCount = computed(() => props.board.columns ? props.board.columns.le
         <div>
             <div class="flex items-start justify-between mb-1">
                 <h4 class="font-semibold text-base text-gray-900 dark:text-white line-clamp-1">
-                    {{ board.name }}
+                    <Link :href="route('boards.show', {board: board.slug})">{{ board.name }}</Link>
                 </h4>
 
                 <!-- Dynamic role badge with conditional coloring -->

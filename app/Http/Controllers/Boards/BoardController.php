@@ -61,7 +61,7 @@ class BoardController extends Controller
         $board->load('columns.tasks');
 
         // 3. Render the dedicated Kanban screen view
-        return Inertia::render('Dashboard/Boards/Show', [
+        return Inertia::render('Dashboard/Boards/BoardShow', [
             'board' => $board
         ]);
     }

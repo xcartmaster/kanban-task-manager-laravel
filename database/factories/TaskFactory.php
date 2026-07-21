@@ -24,7 +24,7 @@ class TaskFactory extends Factory
 
         return [
             'column_id' => Column::factory(),
-            'title' => fake()->sentence(rand(3, 4)),
+            'title' => rtrim(fake()->sentence(rand(3, 4)),'.'),
             'description' => Collection::times(rand(1, 2), fn() => fake()->paragraph(rand(2, 3)))->join("\n\n"),
             'position' => rand(0, 10),
             'start_at' => $start_at,
