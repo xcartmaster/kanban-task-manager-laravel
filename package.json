@@ -14,5 +14,8 @@
         "laravel-vite-plugin": "^3.1",
         "vite": "^8.0.0",
         "vue": "^3.4.0"
+    },
+    "dependencies": {
+        "@vueuse/core": "^14.4.0"
     }
 }

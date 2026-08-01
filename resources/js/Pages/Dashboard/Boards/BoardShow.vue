@@ -1,15 +1,22 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import { useLocalStorage } from '@vueuse/core';
+import { ref } from 'vue';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CustomScrollbar from "@/Components/Boards/CustomScrollbar.vue"; // Imports our decoupled hand-made scrollbar component
-import { ref } from 'vue';
+import CustomScrollbarToggle from "@/Components/Boards/CustomScrollbarToggle.vue";
 
 const props = defineProps({
     board: { type: Object, required: true }
 });
 
-// Toggle switch to enable or disable the handmade custom scrollbar system for testing environments
-const isCustomScrollbarActive = ref(true);
+/**
+ * Creates a reactive reference synchronized with the browser's localStorage.
+ * - 'app_custom_scrollbar_enabled': The exact key used inside the browser storage.
+ * - false: The fallback default value. VueUse writes this boolean to disk IMMEDIATELY on the very first visit.
+ * VueUse automatically handles background type casting, giving us a clean, strict JavaScript Boolean type.
+ */
+const isCustomScrollbarEnabled = useLocalStorage('app_custom_scrollbar_enabled', false);
 
 // Dynamic DOM element references (Template Refs automatically bound by Vue 3)
 const kanbanViewportRef = ref(null); // The main horizontal columns wrapper layout
@@ -37,7 +44,7 @@ const kanbanViewportRef = ref(null); // The main horizontal columns wrapper layo
                     ref="kanbanViewportRef"
                     :class="[
                         'w-full transition-all duration-150 pb-4',
-                        isCustomScrollbarActive ? 'overflow-x-hidden touch-none' : 'overflow-x-auto touch-auto'
+                        isCustomScrollbarEnabled ? 'overflow-x-hidden touch-none' : 'overflow-x-auto touch-auto'
                     ]"
                 >
                     <!--
@@ -59,10 +66,19 @@ const kanbanViewportRef = ref(null); // The main horizontal columns wrapper layo
                     </div>
                 </div>
 
-                <!-- Reusable Scrollbar Component: Mounts dynamically based on testing environment states -->
+                <!-- Mounts or unmounts the custom scrollbar element dynamically based on the stored feature flag state -->
                 <CustomScrollbar
-                    v-if="isCustomScrollbarActive"
+                    v-if="isCustomScrollbarEnabled"
                     :parent-container-ref="kanbanViewportRef"
+                />
+
+                <!--
+                  Passes down the synchronized boolean state to the child toggle component.
+                  Listens to the emitted event and updates the reactive useLocalStorage variable inline using $event.
+                -->
+                <CustomScrollbarToggle
+                    :is-custom-scrollbar-enabled="isCustomScrollbarEnabled"
+                    @custom-scrollbar-toggle="isCustomScrollbarEnabled = $event"
                 />
 
             </div>
