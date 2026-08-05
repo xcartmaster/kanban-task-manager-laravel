@@ -1,4 +1,5 @@
 <script setup>
+/*
 const props = defineProps({
     isCustomScrollbarEnabled: {
         type: Boolean,
@@ -6,19 +7,22 @@ const props = defineProps({
     }
 });
 
-/**
- * Declare the custom event that will bubble up to inform the parent about the state change.
- */
-const emit = defineEmits(['custom-scrollbar-toggle']);
+const emit = defineEmits(['custom-scrollbar-toggle']); // Declare the custom event that will bubble up to inform the parent about the state change.
 
-/**
- * Inverts the current feature flag value received from props and emits it directly to the parent.
- * We don't need local watchers or complex storage logic here because the parent's useLocalStorage
- * hook handles automatic disk writing updates asynchronously.
- */
 function toggleStatus() {
     emit('custom-scrollbar-toggle', !props.isCustomScrollbarEnabled);
 }
+*/
+
+/**
+ * Creates a two-way reactive binding with the parent component.
+ * Replaces the legacy defineProps and defineEmits workflow in Vue 3.4+.
+ * Mutating this local ref automatically syncs with the parent's useLocalStorage.
+ */
+const isCustomScrollbarEnabled = defineModel({
+    type: Boolean,
+    required: true
+});
 </script>
 
 <template>
@@ -32,12 +36,8 @@ function toggleStatus() {
               Hidden native HTML checkbox that manages the true underlying state.
               Binding :checked to props ensures that the parent remains the single source of truth.
             -->
-            <input
-                type="checkbox"
-                :checked="props.isCustomScrollbarEnabled"
-                @change="toggleStatus"
-                class="sr-only peer"
-            />
+            <!-- <input type="checkbox" :checked="isCustomScrollbarEnabled" @change="toggleStatus" class="sr-only peer" /> -->
+            <input type="checkbox" v-model="isCustomScrollbarEnabled" class="sr-only peer" />
             <span class="text-xs text-gray-500">Enable Custom Scrollbar</span>
 
             <!--

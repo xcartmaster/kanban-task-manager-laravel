@@ -75,11 +75,12 @@ const kanbanViewportRef = ref(null); // The main horizontal columns wrapper layo
                 <!--
                   Passes down the synchronized boolean state to the child toggle component.
                   Listens to the emitted event and updates the reactive useLocalStorage variable inline using $event.
-                -->
                 <CustomScrollbarToggle
                     :is-custom-scrollbar-enabled="isCustomScrollbarEnabled"
                     @custom-scrollbar-toggle="isCustomScrollbarEnabled = $event"
                 />
+                -->
+                <CustomScrollbarToggle v-model="isCustomScrollbarEnabled" />
 
             </div>
         </div>
