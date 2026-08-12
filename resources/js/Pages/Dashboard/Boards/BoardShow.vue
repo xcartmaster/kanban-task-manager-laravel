@@ -1,12 +1,12 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import { useLocalStorage } from '@vueuse/core';
-import { ref } from 'vue';
+import { useTemplateRef } from 'vue';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CustomScrollbar from "@/Components/Boards/CustomScrollbar.vue"; // Imports our decoupled hand-made scrollbar component
 import CustomScrollbarToggle from "@/Components/Boards/CustomScrollbarToggle.vue";
 
-const props = defineProps({
+const { board } = defineProps({
     board: { type: Object, required: true }
 });
 
@@ -18,8 +18,9 @@ const props = defineProps({
  */
 const isCustomScrollbarEnabled = useLocalStorage('app_custom_scrollbar_enabled', false);
 
-// Dynamic DOM element references (Template Refs automatically bound by Vue 3)
-const kanbanViewportRef = ref(null); // The main horizontal columns wrapper layout
+// Dynamic DOM element references
+const kanbanViewportRef = useTemplateRef('kanbanViewportRef'); // The main horizontal columns wrapper layout
+
 </script>
 
 <template>
