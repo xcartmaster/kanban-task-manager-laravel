@@ -62,8 +62,11 @@ function checkOverflow() {
         // Calculate the thumb width based on content proportions, then clamp bounds between 10% and 90% for clean UX metrics
         thumbWidthPercent.value = Math.max(10, Math.min((currentClientWidth / currentScrollWidth) * 100, 90));
 
-        // Synchronizes the custom thumb position
-        syncThumbPosition();
+        // BUGFIX VIA NEXTTICK: Guarantees that Vue completes domestic DOM updates and renders the track
+        // into the viewport before we fetch its clientWidth metrics, securing perfect initial thumb alignment.
+        nextTick(() => {
+            syncThumbPosition(); // Synchronizes the custom thumb position
+        });
     } else {
         // CRITICAL: If there is no overflow anymore (e.g. window resized back to huge screen), we must turn off the custom scrollbar track
         showScrollbar.value = false;
