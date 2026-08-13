@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
         tailwindcss(), // 2. Подключили плагин Tailwind v4
         laravel({
-            input: 'resources/js/app.js',
+            input: 'resources/js/app.ts',
             refresh: true,
         }),
         vue({
