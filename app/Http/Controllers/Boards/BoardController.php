@@ -58,7 +58,11 @@ class BoardController extends Controller
         Gate::authorize('view', $board);
 
         // 2. Eager load nested columns and tasks to prevent N+1 database queries
-        $board->load('columns.tasks');
+        $board->load([
+            'columns.tasks' => function ($query) {
+                $query->withCount('comments');
+            }
+        ]);
 
         // 3. Render the dedicated Kanban screen view
         return Inertia::render('Dashboard/Boards/BoardShow', [
