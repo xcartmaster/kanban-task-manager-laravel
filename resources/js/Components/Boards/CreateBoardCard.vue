@@ -1,7 +1,9 @@
-<script setup>
-const emit = defineEmits(['addNewBoardButtonClicked']);
+<script setup lang="ts">
+const emit = defineEmits<{
+    (e: 'addNewBoardButtonClicked'): void;
+}>();
 
-function handleCardClick() {
+function handleCardClick(): void {
     emit('addNewBoardButtonClicked');
 }
 </script>

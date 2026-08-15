@@ -23,7 +23,22 @@ class BoardController extends Controller
 
     public function index(Request $request): Response
     {
-        $shared_boards = $request->user()->sharedBoards()->with('columns.tasks')->get();
+        // $shared_boards = $request->user()->sharedBoards()->with('columns.tasks')->get();
+
+        // Load only the boards with lightweight total counters spanning across nested relations
+        $shared_boards = $request->user()->sharedBoards()
+            ->withCount([
+                'columns as tasks_count' => function ($query) {
+                    // Access tasks through the columns relationship
+                    $query->join('tasks', 'columns.id', '=', 'tasks.column_id');
+                },
+                'columns as comments_count' => function ($query) {
+                    // Deep-access comments through columns -> tasks -> comments tree path
+                    $query->join('tasks', 'columns.id', '=', 'tasks.column_id')
+                        ->join('comments', 'tasks.id', '=', 'comments.task_id');
+                }
+            ])
+            ->get();
 
         return Inertia::render('Dashboard/Boards/Index', [
             'shared_boards' => $shared_boards

@@ -1,28 +1,32 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
-// Define the incoming props for the board object
-const props = defineProps({
-    board: {
-        type: Object,
-        required: true
-    }
-});
+/**
+ * Declare local interfaces matching the new layout data metrics
+ */
+interface BoardPivot {
+    role: string;
+}
+
+interface Board {
+    id: number;
+    name: string;
+    slug: string;
+    pivot: BoardPivot;
+    tasks_count?: number;    // Injected directly from our optimized controller query
+    comments_count?: number; // Injected directly from our optimized controller query
+}
+
+/**
+ * Leverage Vue 3.5+ Type-Based Prop Destructuring
+ */
+const { board } = defineProps<{
+    board: Board;
+}>();
 
 // Extract the user role safely from Laravel pivot data
-const userRole = computed(() => props.board?.pivot?.role || 'member');
-
-// Calculate total tasks across all columns inside this board
-const totalTasksCount = computed(() => {
-    if (!props.board.columns) return 0;
-    return props.board.columns.reduce((sum, column) => {
-        return sum + (column.tasks ? column.tasks.length : 0);
-    }, 0);
-});
-
-// Calculate columns count safely
-const columnsCount = computed(() => props.board.columns ? props.board.columns.length : 0);
+const userRole = computed<string>(() => board?.pivot?.role || 'member');
 </script>
 
 <template>
@@ -44,18 +48,18 @@ const columnsCount = computed(() => props.board.columns ? props.board.columns.le
                     {{ userRole }}
                 </span>
             </div>
-            <p class="text-gray-400 dark:text-zinc-500 text-xs truncate">Slug: {{ board.slug }}</p>
         </div>
 
         <!-- Board Metrics Footer Section -->
         <div class="flex items-center space-x-4 mt-4 pt-2 border-t border-gray-50 dark:border-zinc-700/50 text-xs text-gray-400 dark:text-zinc-500">
-            <div class="flex items-center space-x-1" title="Total Columns">
-                <span>📋</span>
-                <span class="font-medium text-gray-600 dark:text-zinc-400">{{ columnsCount }} cols</span>
-            </div>
             <div class="flex items-center space-x-1" title="Total Tasks">
                 <span>✅</span>
-                <span class="font-medium text-gray-600 dark:text-zinc-400">{{ totalTasksCount }} tasks</span>
+                <span class="font-medium text-gray-600 dark:text-zinc-400">{{ board.tasks_count ?? 0 }} tasks</span>
+            </div>
+
+            <div class="flex items-center space-x-1" title="Total Comments Across All Tasks">
+                <span>💬</span>
+                <span class="font-medium text-gray-600 dark:text-zinc-400">{{ board.comments_count ?? 0 }} comments</span>
             </div>
         </div>
     </div>

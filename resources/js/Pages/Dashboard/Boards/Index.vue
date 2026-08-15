@@ -1,32 +1,56 @@
-<script setup>
+<script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import CreateBoardCard from '@/Components/Boards/CreateBoardCard.vue';
 import BoardCard from '@/Components/Boards/BoardCard.vue';
 
-// Define the incoming props from Laravel Controller
-const props = defineProps({
-    shared_boards: {
-        type: Array,
-        required: true
-    }
-});
+/**
+ * Define Strict TypeScript Interfaces for Pivot and Board Entities
+ */
+interface BoardPivot {
+    board_id: number;
+    user_id: number;
+    role: string;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+interface Board {
+    id: number;
+    user_id: number;
+    name: string;
+    slug: string;
+    position: number;
+    created_at: string | null;
+    updated_at: string | null;
+    pivot: BoardPivot; // board_user table
+    // New lightweight integer aggregates injected directly from our optimized controller query
+    tasks_count?: number;
+    comments_count?: number;
+}
+
+/**
+ * Leverage Vue 3.5+ Type-Based Prop Destructuring
+ */
+const { shared_boards } = defineProps<{
+    shared_boards: Board[];
+}>();
 
 // Filter boards where the user is the owner (checking the Laravel pivot object)
 const myBoards = computed(() => {
-    return (props.shared_boards || []).filter(board => board?.pivot?.role === 'owner');
+    return (shared_boards || []).filter(board => board?.pivot?.role === 'owner');
 });
 
 // Filter boards where the user has any role other than owner
 const sharedBoards = computed(() => {
-    return (props.shared_boards || []).filter(board => board?.pivot?.role !== 'owner');
+    return (shared_boards || []).filter(board => board?.pivot?.role !== 'owner');
 });
 
 // Safe computed properties for counts to prevent blank screen issues
 const myBoardsCount = computed(() => myBoards.value.length);
 const sharedBoardsCount = computed(() => sharedBoards.value.length);
-const totalBoardsCount = computed(() => (props.shared_boards || []).length);
+const totalBoardsCount = computed(() => (shared_boards || []).length);
 
 // --- MODAL & FORM LOGIC ---
 const isCreateModalOpen = ref(false);
