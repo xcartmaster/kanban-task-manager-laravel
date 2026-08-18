@@ -5,34 +5,17 @@ import { useTemplateRef } from 'vue';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CustomScrollbar from "@/Components/Boards/CustomScrollbar.vue"; // Imports our decoupled hand-made scrollbar component
 import CustomScrollbarToggle from "@/Components/Boards/CustomScrollbarToggle.vue";
+import BoardColumn from "@/Components/Boards/BoardColumn.vue";
+
+// Import the strictly typed interface directly from the child component node
+import type { Column } from "@/Components/Boards/BoardColumn.vue";
 
 /**
  * TypeScript interfaces perfectly mapped to the database schema metrics.
  * Supports strict type safety for Eloquent relational models injected via Inertia.
+ * Define the main Board interface, embedding the Column structure
+ * imported directly from the BoardColumn.vue component.
  */
-interface Task {
-    id: number;
-    column_id: number;
-    title: string;
-    description: string | null; // Nullable in database (YES)
-    position: number;
-    start_at: string | null;     // Nullable timestamp
-    due_at: string | null;       // Nullable timestamp
-    created_at: string | null;
-    updated_at: string | null;
-    comments_count?: number; // Generated asynchronously by Laravel's withCount('comments')
-}
-
-interface Column {
-    id: number;
-    board_id: number;
-    name: string;
-    position: number;
-    created_at: string | null;
-    updated_at: string | null;
-    tasks: Task[];                // Eager-loaded nested tasks array
-}
-
 interface Board {
     id: number;
     user_id: number;
@@ -41,7 +24,11 @@ interface Board {
     position: number;
     created_at: string | null;
     updated_at: string | null;
-    columns: Column[];            // Eager-loaded nested columns array
+    /**
+     * Using the exported Column type ensures that PhpStorm provides full
+     * autocomplete and error highlighting for deeply nested columns and tasks.
+     */
+    columns: Column[];
 }
 
 /**
@@ -96,23 +83,12 @@ const kanbanViewportRef = useTemplateRef<HTMLDivElement>('kanbanViewportRef');
                       while 'justify-start' guarantees bulletproof, static coordinate matrices for Drag and Drop operations.
                     -->
                     <div class="flex pb-2 items-start select-none justify-start space-x-6 w-fit mx-auto">
-                        <!-- Columns Loop -->
-                        <div v-for="column in board.columns" :key="column.id" class="w-72 shrink-0 bg-white dark:bg-zinc-900 border border-gray-200/60 dark:border-zinc-800/80 p-4 rounded-2xl shadow-sm pointer-events-auto">
-                            <h4 class="font-bold text-gray-800 dark:text-zinc-200 mb-3">{{ column.name }}</h4>
-                            <div class="space-y-3">
-                                <!-- Tasks Loop -->
-                                <div v-for="task in column.tasks" :key="task.id" class="p-3 bg-gray-50/70 hover:bg-white dark:bg-zinc-800/50 dark:hover:bg-zinc-800 shadow-xs hover:shadow-md border border-gray-100/70 dark:border-zinc-700/50 rounded-xl text-gray-900 dark:text-zinc-300 text-sm transition-all duration-200 cursor-pointer transform hover:-translate-y-0.5">
-                                    {{ task.title }}
-
-                                    <!-- Displays the comment counter badge only if the count exists and is greater than zero -->
-                                    <div v-if="task.comments_count" class="mt-2 flex items-center space-x-1 text-xs text-gray-400 dark:text-zinc-500">
-                                        <!-- Tiny decorative comment icon using plain text or your SVG icon -->
-                                        <span>💬</span>
-                                        <span>{{ task.comments_count }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Columns Loop using dynamic sub-component extraction -->
+                        <BoardColumn
+                            v-for="column in board.columns"
+                            :key="column.id"
+                            :column
+                        />
                     </div>
                 </div>
 
